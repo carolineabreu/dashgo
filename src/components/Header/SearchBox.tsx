@@ -2,6 +2,9 @@ import { Flex, Icon, Input } from "@chakra-ui/react";
 import { RiSearchLine } from "react-icons/ri";
 
 export function SearchBox() {
+  // controlled components => const [search, setSearch] = useState("") e no input value={search} e onChange (declarativo)
+  // uncontrolled components => cost searchInputRef = useRef<HTMLInputElement>(null), no input ref={searchInputRef},
+  // para pegar os dados do input searchInputRef.current.value (imperativo)
   return (
     // foi feito o flex como label porque vai ter um icone e um input e se o usuário clicar no icone o input também recebe o foco
     <Flex
