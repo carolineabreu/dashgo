@@ -1,13 +1,4 @@
-import {
-  Box,
-  Button,
-  Divider,
-  Flex,
-  HStack,
-  Heading,
-  SimpleGrid,
-  VStack,
-} from "@chakra-ui/react";
+import { Box, Button, Divider, Flex, HStack, Heading, SimpleGrid, VStack } from "@chakra-ui/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -16,6 +7,10 @@ import Link from "next/link";
 import { Input } from "@/src/components/Form/Input";
 import { Header } from "@/src/components/Header";
 import { Sidebar } from "@/src/components/Sidebar";
+import { useMutation } from "react-query";
+import { api } from "@/src/services/api";
+import { queryClient } from "@/src/services/queryClient";
+import { useRouter } from "next/router";
 
 type CreateUserFormData = {
   name: string;
@@ -27,28 +22,43 @@ type CreateUserFormData = {
 const createUserFormSchema = yup.object().shape({
   name: yup.string().required("Nome obrigatório"),
   email: yup.string().email("E-mail inválido").required("E-mail obrigatório"),
-  password: yup
-    .string()
-    .required("Senha obrigatória")
-    .min(6, "No minímo 6 caracteres"),
+  password: yup.string().required("Senha obrigatória").min(6, "No minímo 6 caracteres"),
   password_confirmation: yup
     .string()
     .oneOf(["", yup.ref("password")], "As senhas precisam ser iguais"),
 });
 
 export default function CreateUser() {
+  const router = useRouter();
+
+  const createUser = useMutation(
+    async (user: CreateUserFormData) => {
+      const response = await api.post("/users", {
+        user: {
+          ...user,
+          created_at: new Date(), // campos do front pro back, envia com _ mesmo que no front seja camelCase
+        },
+      });
+
+      return response.data.user;
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("users");
+      },
+    }
+  );
+
   const { register, handleSubmit, formState } = useForm<CreateUserFormData>({
     resolver: yupResolver(createUserFormSchema),
   });
 
   const { errors, isSubmitting } = formState;
 
-  const handleCreateUser: SubmitHandler<CreateUserFormData> = async (
-    values
-  ) => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+  const handleCreateUser: SubmitHandler<CreateUserFormData> = async (values) => {
+    await createUser.mutateAsync(values);
 
-    console.log(values);
+    router.push("/users"); // envia o usuário de voltar pra essa página. Seria o mesmo que o navigate do react?
   };
 
   return (
@@ -73,17 +83,8 @@ export default function CreateUser() {
 
           <VStack spacing={["6", "8"]}>
             <SimpleGrid minChildWidth="240px" spacing="8" w="100%">
-              <Input
-                label="Nome completo"
-                error={errors.name}
-                {...register("name")}
-              />
-              <Input
-                type="email"
-                label="E-mail"
-                error={errors.email}
-                {...register("email")}
-              />
+              <Input label="Nome completo" error={errors.name} {...register("name")} />
+              <Input type="email" label="E-mail" error={errors.email} {...register("email")} />
             </SimpleGrid>
             <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
               <Input
