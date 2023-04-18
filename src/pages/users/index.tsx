@@ -40,7 +40,6 @@ export default function UserList() {
             </Heading>
             <Link href="/users/create" passHref>
               <Button
-                as="a"
                 size="sm"
                 fontSize="sm"
                 colorScheme="pink"
